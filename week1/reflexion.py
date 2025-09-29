@@ -15,7 +15,23 @@ Keep the implementation minimal.
 """
 
 # TODO: Fill this in!
-YOUR_REFLEXION_PROMPT = ""
+YOUR_REFLEXION_PROMPT = (
+    """
+You are a coding assistant. Output ONLY a single fenced Python code block that defines
+exactly one function: is_valid_password(password: str) -> bool. No prose, no explanations,
+no additional text outside the single code block.
+
+Requirements for the function to return True:
+- Length >= 8
+- Contains at least one lowercase letter
+- Contains at least one uppercase letter
+- Contains at least one digit
+- Contains at least one special character from the set: !@#$%^&*()-_
+- Contains no whitespace characters
+
+Return False otherwise. Keep the implementation minimal and deterministic.
+"""
+)
 
 
 # Ground-truth test suite used to evaluate generated code
@@ -92,11 +108,19 @@ def generate_initial_function(system_prompt: str) -> str:
 
 
 def your_build_reflexion_context(prev_code: str, failures: List[str]) -> str:
-    """TODO: Build the user message for the reflexion step using prev_code and failures.
-
-    Return a string that will be sent as the user content alongside the reflexion system prompt.
-    """
-    return ""
+    """Build the user message for the reflexion step using prev_code and failures."""
+    failures_block = "\n".join(f"- {f}" for f in failures) or "- (no failures provided)"
+    return (
+        "Previous implementation (do not repeat mistakes):\n"
+        "```python\n" + prev_code + "\n```\n\n"
+        "Failed tests (analyze and fix):\n" + failures_block + "\n\n"
+        "Rewrite the function so that it meets ALL of the following acceptance criteria:\n"
+        "- Length >= 8\n"
+        "- Contains at least one lowercase, one uppercase, one digit, and one special from !@#$%^&*()-_\n"
+        "- Contains no whitespace\n\n"
+        "Output ONLY a single fenced Python code block that defines exactly one function: is_valid_password(password: str) -> bool.\n"
+        "Do not include any explanations or text outside the code block."
+    )
 
 
 def apply_reflexion(
