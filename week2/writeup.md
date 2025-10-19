@@ -49,7 +49,7 @@ Key features generated:
 Prompt: 
 ```
 (Continued from Exercise 1 - part of the same conversation in Cursor)
-The AI automatically generated comprehensive unit tests after implementing the LLM function.
+The AI automatically generated comprehensive unit tests after implementing the LLM function (using Claude 4.5 Sonnet in Cursor). However, if this did not happen, I would have said something like "now generate comprehensive unit tests. consider a wide range of normal and edge cases, such as empty list, bulleted lists, bad formatting, etc. consider cases and implement"
 ``` 
 
 Generated Code Snippets:

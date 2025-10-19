@@ -1,6 +1,7 @@
 async function fetchJSON(url, options) {
   const res = await fetch(url, options);
   if (!res.ok) throw new Error(await res.text());
+  if (res.status === 204) return null;
   return res.json();
 }
 
@@ -10,7 +11,41 @@ async function loadNotes() {
   const notes = await fetchJSON('/notes/');
   for (const n of notes) {
     const li = document.createElement('li');
-    li.textContent = `${n.title}: ${n.content}`;
+    const textSpan = document.createElement('span');
+    textSpan.textContent = `${n.title}: ${n.content}`;
+    li.appendChild(textSpan);
+    
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.style.marginLeft = '10px';
+    editBtn.onclick = async () => {
+      const newTitle = prompt('New title:', n.title);
+      const newContent = prompt('New content:', n.content);
+      if (newTitle !== null || newContent !== null) {
+        await fetchJSON(`/notes/${n.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newTitle !== null ? newTitle : undefined,
+            content: newContent !== null ? newContent : undefined,
+          }),
+        });
+        loadNotes();
+      }
+    };
+    li.appendChild(editBtn);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.style.marginLeft = '5px';
+    deleteBtn.onclick = async () => {
+      if (confirm(`Delete note "${n.title}"?`)) {
+        await fetchJSON(`/notes/${n.id}`, { method: 'DELETE' });
+        loadNotes();
+      }
+    };
+    li.appendChild(deleteBtn);
+    
     list.appendChild(li);
   }
 }
