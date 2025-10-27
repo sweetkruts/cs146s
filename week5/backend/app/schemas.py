@@ -1,9 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class NoteCreate(BaseModel):
-    title: str
-    content: str
+    title: str = Field(min_length=1, max_length=200)
+    content: str = Field(min_length=1, max_length=5000)
+
+
+class NoteUpdate(BaseModel):
+    title: str | None = Field(None, min_length=1, max_length=200)
+    content: str | None = Field(None, min_length=1, max_length=5000)
 
 
 class NoteRead(BaseModel):
@@ -16,7 +21,7 @@ class NoteRead(BaseModel):
 
 
 class ActionItemCreate(BaseModel):
-    description: str
+    description: str = Field(min_length=1, max_length=500)
 
 
 class ActionItemRead(BaseModel):

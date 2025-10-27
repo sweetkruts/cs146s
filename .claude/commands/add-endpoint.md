@@ -90,3 +90,4 @@ Example: `/add-endpoint note PUT /notes/{note_id}`
 - Preserves existing functionality
 - Uses black/ruff for consistent formatting
 
+

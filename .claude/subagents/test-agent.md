@@ -163,3 +163,4 @@ def test_get_note_not_found(client, db_session):
     assert "not found" in response.json()["detail"].lower()
 ```
 
+

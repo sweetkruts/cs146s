@@ -243,3 +243,4 @@ FastAPI automatically generates interactive API documentation:
 - **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI JSON**: http://localhost:8000/openapi.json
 
+
