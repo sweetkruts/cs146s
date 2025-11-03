@@ -91,3 +91,4 @@ Example: `/add-endpoint note PUT /notes/{note_id}`
 - Uses black/ruff for consistent formatting
 
 
+

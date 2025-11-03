@@ -68,16 +68,19 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
 
 @router.get("/unsafe-search", response_model=list[NoteRead])
 def unsafe_search(q: str, db: Session = Depends(get_db)) -> list[NoteRead]:
+    # Use parameterized query to prevent SQL injection
     sql = text(
-        f"""
+        """
         SELECT id, title, content, created_at, updated_at
         FROM notes
-        WHERE title LIKE '%{q}%' OR content LIKE '%{q}%'
+        WHERE title LIKE :pattern OR content LIKE :pattern
         ORDER BY created_at DESC
         LIMIT 50
         """
     )
-    rows = db.execute(sql).all()
+    # Escape wildcards in user input and wrap with LIKE wildcards
+    safe_pattern = f"%{q.replace('%', '%%').replace('_', '__')}%"
+    rows = db.execute(sql, {"pattern": safe_pattern}).all()
     results: list[NoteRead] = []
     for r in rows:
         results.append(
