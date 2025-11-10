@@ -21,5 +21,3 @@ def test_create_list_and_patch_notes(client):
     assert r.status_code == 200
     patched = r.json()
     assert patched["title"] == "Updated"
-
-
