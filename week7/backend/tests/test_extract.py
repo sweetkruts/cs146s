@@ -13,5 +13,3 @@ def test_extract_action_items():
     assert "TODO: write tests" in items
     assert "ACTION: review PR" in items
     assert "Ship it!" in items
-
-
