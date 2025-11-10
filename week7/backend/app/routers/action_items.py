@@ -1,3 +1,4 @@
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import asc, desc, select
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/action-items", tags=["action_items"])
 @router.get("/", response_model=list[ActionItemRead])
 def list_items(
     db: Session = Depends(get_db),
-    completed: bool | None = None,
+    completed: Optional[bool] = None,
     skip: int = 0,
     limit: int = Query(50, le=200),
     sort: str = Query("-created_at"),
@@ -55,9 +56,7 @@ def complete_item(item_id: int, db: Session = Depends(get_db)) -> ActionItemRead
 
 
 @router.patch("/{item_id}", response_model=ActionItemRead)
-def patch_item(
-    item_id: int, payload: ActionItemPatch, db: Session = Depends(get_db)
-) -> ActionItemRead:
+def patch_item(item_id: int, payload: ActionItemPatch, db: Session = Depends(get_db)) -> ActionItemRead:
     item = db.get(ActionItem, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Action item not found")
@@ -69,3 +68,5 @@ def patch_item(
     db.flush()
     db.refresh(item)
     return ActionItemRead.model_validate(item)
+
+
