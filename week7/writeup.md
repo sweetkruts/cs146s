@@ -1,19 +1,12 @@
 # Week 7 Write-up
-Tip: To preview this markdown file
-- On Mac, press `Command (⌘) + Shift + V`
-- On Windows/Linux, press `Ctrl + Shift + V`
-
-## Instructions
-
-Fill out all of the `TODO`s in this file.
 
 ## Submission Details
 
-Name: **Willy** \
-SUNet ID: **sweetkruts** \
-Citations: **Claude AI (Cursor) for implementation, Graphite Diamond for AI code review**
+Name: **William Li** \
+SUNet ID: **willyli** \
+Citations: **Claude (Cursor) for implementation, Graphite Diamond for AI code review**
 
-This assignment took me about **4** hours to do. 
+This assignment took me about **2** hours to do. 
 
 
 ## Task 1: Add more endpoints and validations
@@ -28,14 +21,7 @@ This assignment took me about **4** hours to do.
 The application lacked DELETE endpoints and proper input validation for notes and action items, making it difficult to remove unwanted data and allowing invalid inputs.
 
 **Implementation Approach:**
-- Added DELETE endpoints for both `/notes/{id}` and `/action-items/{id}` with proper 404 handling
-- Implemented Pydantic Field validators for all input schemas:
-  - Title: min_length=1, max_length=200
-  - Description: min_length=1, max_length=500
-  - Content: min_length=1
-- Added GET by ID endpoint for action items (`/action-items/{id}`)
-- Used HTTP 204 (No Content) for successful DELETE operations
-- Used HTTP 422 (Unprocessable Entity) for validation failures
+Added DELETE endpoints for both `/notes/{id}` and `/action-items/{id}` with proper 404 handling. Implemented Pydantic Field validators for all input schemas with title max length of 200 chars, description max of 500 chars, and minimum length of 1 for all fields. Also added GET by ID endpoint for action items. Used HTTP 204 for successful deletions and HTTP 422 for validation failures.
 
 **Testing Performed:**
 ```bash
@@ -43,10 +29,10 @@ cd week7 && PYTHONPATH=. pytest backend/tests -v
 # Result: 16 tests passed
 ```
 
+Added 8 new tests covering DELETE success cases, 404 cases for non-existent resources, validation failures for empty strings and exceeded length limits, and GET by ID functionality.
+
 **Notable Tradeoffs:**
-- Field validation is schema-level only (Pydantic), not database-level
-- No soft delete implementation - deletions are permanent
-- Max length constraints are somewhat arbitrary
+Field validation is schema-level only (Pydantic), not database-level. No soft delete implementation, so deletions are permanent. Max length constraints are somewhat arbitrary.
 
 ### c. Graphite Diamond generated code review
 
@@ -74,14 +60,7 @@ cd week7 && PYTHONPATH=. pytest backend/tests -v
 The existing action item extraction logic only recognized basic patterns (TODO:, ACTION:, lines ending with !). Need more sophisticated pattern recognition including priority detection and due date parsing.
 
 **Implementation Approach:**
-- Created three new extraction functions:
-  1. `extract_action_items_with_priority()`: Detects high/medium/low priority based on keywords
-  2. `extract_due_date()`: Parses multiple date formats (YYYY-MM-DD, MM/DD/YYYY)
-  3. `extract_action_items_enhanced()`: Combines priority + due date extraction
-- Extended action keyword recognition: `todo:`, `action:`, `task:`, `fix:`, `bug:`
-- High priority: URGENT, ASAP, critical, important, emergency keywords or `!!`
-- Low priority: Lines ending with `?`
-- Medium priority: Default for recognized action keywords
+Created three new extraction functions. First, `extract_action_items_with_priority()` detects high/medium/low priority based on keywords like URGENT, ASAP, critical, important, emergency for high priority, and lines ending with ? for low priority. Second, `extract_due_date()` parses multiple date formats including YYYY-MM-DD and MM/DD/YYYY with keywords like "due:", "by", and "deadline:". Third, `extract_action_items_enhanced()` combines both priority and due date extraction. Extended action keyword recognition to include todo:, action:, task:, fix:, and bug:.
 
 **Testing Performed:**
 ```bash
@@ -89,10 +68,10 @@ cd week7 && PYTHONPATH=. pytest backend/tests/test_extract.py -v
 # Result: 6 tests passed
 ```
 
+Added 5 new tests covering priority detection with various keywords and punctuation, date parsing with multiple formats, invalid date handling, and bullet point text handling.
+
 **Notable Tradeoffs:**
-- Date parsing is limited to specific patterns (no natural language)
-- Priority detection is keyword-based (no sentiment analysis)
-- No internationalization support
+Date parsing is limited to specific patterns with no natural language support. Priority detection is keyword-based without sentiment analysis. No internationalization support for dates or keywords.
 
 ### c. Graphite Diamond generated code review
 
@@ -122,13 +101,7 @@ cd week7 && PYTHONPATH=. pytest backend/tests/test_extract.py -v
 Notes lacked organization and categorization capabilities. Need a tagging system with many-to-many relationships to enable flexible note organization.
 
 **Implementation Approach:**
-- Created Tag model with fields: id, name (unique), color (hex format), timestamps
-- Implemented `note_tags` association table for many-to-many relationship
-- Added bidirectional relationships in SQLAlchemy models
-- Created complete CRUD API for tags (`/tags/` endpoints)
-- Updated Note schemas to support tag associations via `tag_ids` field
-- Tag color validation using regex pattern for hex colors (#RRGGBB)
-- Cascade deletion removes tag from all notes but doesn't delete notes
+Created a Tag model with id, name (unique), color (hex format), and timestamps. Implemented a `note_tags` association table for the many-to-many relationship between notes and tags, with bidirectional relationships in the SQLAlchemy models. Created a complete CRUD API for tags with all standard endpoints. Updated Note schemas to support tag associations via a `tag_ids` field that gets validated during create and patch operations. Added tag color validation using regex pattern for standard 6-digit hex colors. Configured cascade deletion so that when a tag is deleted, it's removed from all associated notes without deleting the notes themselves.
 
 **Testing Performed:**
 ```bash
@@ -136,11 +109,10 @@ cd week7 && PYTHONPATH=. pytest backend/tests/test_tags.py -v
 # Result: 11 tests passed
 ```
 
+Added 11 comprehensive tests covering tag CRUD operations, duplicate tag name prevention, color format validation with multiple invalid formats, note-tag associations during create and update, cascade deletion behavior, and tag sorting.
+
 **Notable Tradeoffs:**
-- No tag hierarchy or nesting
-- Tags are global (not user-scoped)
-- No limit on number of tags per note
-- Deleting a tag removes it from all notes (no confirmation)
+No tag hierarchy or nesting support. Tags are global and not user-scoped. No limit on the number of tags per note. Deleting a tag removes it from all notes without confirmation.
 
 ### c. Graphite Diamond generated code review
 
@@ -170,26 +142,7 @@ cd week7 && PYTHONPATH=. pytest backend/tests/test_tags.py -v
 Existing tests didn't adequately cover edge cases for pagination and sorting functionality, leaving potential bugs undetected.
 
 **Implementation Approach:**
-Created comprehensive test suite with 18 tests covering:
-
-**Pagination Edge Cases:**
-- Basic skip/limit functionality
-- Skip beyond available results (returns empty)
-- Limit of zero (returns empty)
-- Maximum limit enforcement (200 max, 422 for exceeding)
-- Large skip values (1,000,000+)
-- Boundary conditions (skip=1, limit=1)
-
-**Sorting Tests:**
-- Ascending/descending by title, description, created_at
-- Invalid field names (graceful fallback to default)
-- Sorting by boolean fields (completed status)
-- Default sorting behavior (-created_at)
-
-**Combined Functionality:**
-- Pagination + sorting together
-- Pagination + search queries
-- Pagination + filtering (completed status)
+Created a comprehensive test suite with 18 tests covering pagination edge cases including basic skip/limit functionality, skip values beyond available results, limit of zero, maximum limit enforcement (200 max with 422 error for exceeding), large skip values over 1 million, and boundary conditions. Also added sorting tests for ascending and descending order by various fields including title, description, and created_at, invalid field names with graceful fallback, sorting by boolean fields like completed status, and default sorting behavior. Included combination tests for pagination with sorting, search queries, and filtering by completion status.
 
 **Testing Performed:**
 ```bash
@@ -197,9 +150,10 @@ cd week7 && PYTHONPATH=. pytest backend/tests/test_pagination_sorting.py -v
 # Result: 18 tests passed
 ```
 
+All tests passing with no regressions in existing functionality.
+
 **Notable Tradeoffs:**
-- Tests create many database records (250 in one test)
-- No performance benchmarking for large datasets
+Tests create many database records (250 in one test) which may impact test suite performance. No performance benchmarking for large datasets with thousands of records.
 
 ### c. Graphite Diamond generated code review
 
@@ -221,224 +175,38 @@ cd week7 && PYTHONPATH=. pytest backend/tests/test_pagination_sorting.py -v
 
 ### a. The types of comments I typically made in my manual reviews
 
-During my manual reviews, I focused on these categories:
+During my manual reviews, I focused on whether the implementation actually makes sense from a user and system perspective. I questioned business logic decisions like why notes and action items have different validation rules, or whether the asymmetry between unlimited content length versus 500 character descriptions was intentional. I paid attention to API design and consistency across endpoints, making sure all resources follow similar patterns and return intuitive error messages. I also considered code architecture and whether the structure would scale as features are added, particularly around issues like code duplication and separation of concerns.
 
-1. **Correctness & Business Logic**
-   - Does the implementation match what users actually need?
-   - Are there logical bugs or edge cases that could cause incorrect behavior?
-   - Example: Questioning whether asymmetric validation rules were intentional
-
-2. **API Design & User Experience**
-   - Consistency across endpoints (REST conventions)
-   - Clear and helpful error messages
-   - Intuitive parameter naming and response structures
-
-3. **Code Architecture & Maintainability**
-   - Separation of concerns
-   - Code duplication and DRY violations
-   - Whether the code structure will scale as features are added
-
-4. **Security & Data Integrity**
-   - SQL injection prevention (proper ORM usage)
-   - Input validation and sanitization
-   - Cascade deletion implications
-
-5. **Testing Strategy**
-   - Not just coverage, but quality of assertions
-   - Whether tests will catch real bugs
-   - Test maintainability and execution speed
-
-6. **Performance & Scalability**
-   - Database query efficiency
-   - Memory usage in tests (creating 250 records)
-   - How code will perform with production data volumes
+Security and data integrity were important, though mostly verified through proper ORM usage to prevent SQL injection and understanding cascade deletion implications. For testing, I cared less about raw coverage numbers and more about whether the tests would actually catch real bugs and remain maintainable as the codebase evolves. Performance considerations came up around database query efficiency and test execution speed, especially when seeing tests that create hundreds of records.
 
 ### b. Comparison of my comments vs. Graphite's AI-generated comments
 
-**What Graphite Focused On:**
-- **Verification prompts**: "Verify this...", "Confirm that...", "Check the..."
-- **Technical correctness**: Specific line numbers, implementation details
-- **Testing mechanics**: Exact assertions, status codes, test behavior
-- **Code-level issues**: db.flush() vs db.commit(), regex patterns, type checking
+Graphite focused heavily on verification and technical correctness. Most of its comments started with "Verify this" or "Confirm that" or "Check the", followed by specific implementation details, line numbers, and code-level issues like db.flush() versus db.commit() or regex patterns. It excelled at testing mechanics, pointing out exact assertions, status codes, and test behavior.
 
-**What I Focused On (in my mental review):**
-- **"Why" questions**: Why are notes and action items validated differently?
-- **User perspective**: Will users understand these error messages?
-- **System-wide consistency**: Do all resources follow the same patterns?
-- **Maintenance burden**: How easy will this be to change later?
-- **Design decisions**: Should we consolidate these three similar functions?
+I approached reviews differently, asking "why" questions rather than just checking if things work. Where Graphite said "verify the duplicate prevention logic in tag creation", I wondered whether tag names should be case-insensitive since "Work" and "work" as separate tags might confuse users. When Graphite noted that timing tests could be flaky, I thought about how this would break in CI where tests run in parallel and whether we should mock datetime instead of relying on real timestamps.
 
-**Key Differences:**
-
-1. **Graphite asked me to verify, I questioned the design**
-   - Graphite: "Verify the duplicate prevention logic in tag creation"
-   - Me: "Should tag names be case-insensitive? 'Work' vs 'work' as separate tags might confuse users"
-
-2. **Graphite focused on implementation, I focused on intent**
-   - Graphite: "Lines 67-82 test created_at sorting, could be flaky"
-   - Me: "These timing tests will fail in CI - should we mock datetime instead of relying on real timestamps?"
-
-3. **Graphite gave checklist items, I prioritized**
-   - Graphite: Listed 6 items for Task 3 without priority
-   - Me: "The missing GET endpoint for notes (Task 1) is critical for API consistency - should fix before release"
-
-4. **Graphite was thorough but literal, I was contextual**
-   - Graphite: "Consider if extract_action_items_with_priority and base extract_action_items are still needed"
-   - Me: "Having three similar functions suggests unclear requirements - should we clarify the use case before consolidating?"
+The key difference is that Graphite gave me checklists while I tried to prioritize what actually matters. Graphite listed six items for Task 3 without indicating which were critical versus nice-to-have. When I noticed the missing GET endpoint for notes in Task 1, I flagged it as a blocker for API consistency that should be fixed before release. Graphite was thorough but literal, focusing on whether the implementation works correctly. I was more contextual, considering whether the design itself makes sense and what the implications are for users and maintainers.
 
 ### c. When the AI reviews were better/worse than mine
 
-**When Graphite Was Better:**
+Graphite was significantly better at catching technical gotchas I would have missed. In Task 1, it caught that the test for GET /notes/{note_id} expects 404 after deletion but there's no explicit GET endpoint in the router. I would have completely missed this discrepancy between tests and implementation. The AI can systematically check test-code alignment in a way that's tedious for humans. It also excels at precise line references, pinpointing exactly where issues occur, which makes fixes much easier. For Task 3, it provided a comprehensive checklist of all six aspects to verify for the many-to-many relationship, ensuring nothing was forgotten. Pattern recognition is another strength - it immediately identified the !! versus ! logic issue and code duplication across three functions.
 
-1. **Catching Technical Gotchas (Task 1)**
-   - Graphite caught the missing GET endpoint test issue: "test for GET /notes/{note_id} expects 404 after deletion, but there's no explicit GET endpoint"
-   - I would have missed this discrepancy between tests and implementation
-   - **Why better**: AI systematically checks test-code alignment
+My reviews were better at understanding user intent and questioning whether requirements make sense in the first place. When I saw the validation asymmetry in Task 1, I didn't just note it - I questioned whether it was intentional and whether it would make sense to users. Graphite just said "confirm this matches requirements" without considering that the requirement itself might be flawed. I also noticed system-wide consistency issues that Graphite missed. While it focused on individual endpoints, I saw that notes and action items had inconsistent API patterns and suggested standardizing them. 
 
-2. **Precise Line References (Task 4)**
-   - Graphite pinpointed "Line 87 tests invalid sorting but only checks status 200"
-   - Gave exact locations making fixes easy
-   - **Why better**: AI can scan entire files and reference specific lines instantly
+Prioritization is a major gap in AI reviews. I identified timing-sensitive tests as a blocker for CI/CD deployment, while Graphite just mentioned they could be flaky without conveying urgency. For design tradeoffs, I questioned whether we actually need three similar extraction functions or if we're over-engineering the solution. Graphite suggested consolidation but didn't challenge the original design decision. The user experience perspective is almost entirely missing from AI reviews. I considered whether we should warn users before cascade deleting tags from all notes, while Graphite only verified that the cascade behavior works technically.
 
-3. **Comprehensive Checklist Approach (Task 3)**
-   - Listed all 6 aspects to verify for the many-to-many relationship
-   - Ensured nothing was forgotten
-   - **Why better**: AI is exhaustive and doesn't skip obvious checks
-
-4. **Pattern Recognition (Task 2)**
-   - Identified the !! vs ! logic issue immediately
-   - Caught the code duplication across three functions
-   - **Why better**: AI recognizes common antipatterns from training data
-
-**When My Review Was Better:**
-
-1. **Understanding User Intent (Task 1)**
-   - I questioned: "Is the validation asymmetry (unlimited content vs 500 chars) intentional?"
-   - Graphite just said "confirm this matches requirements" without questioning WHY
-   - **Why better**: Humans consider if the requirement itself makes sense
-
-2. **System-Wide Consistency (Task 1)**
-   - I noticed notes and action items had inconsistent API patterns
-   - Suggested adding GET by ID to notes for parity
-   - Graphite focused on individual endpoints, not cross-resource patterns
-   - **Why better**: Humans see architectural consistency across the system
-
-3. **Prioritization & Urgency (Task 4)**
-   - I identified timing-sensitive tests as a blocker for CI/CD
-   - Graphite mentioned it but didn't convey urgency
-   - **Why better**: Humans understand deployment implications
-
-4. **Design Trade-offs (Task 2)**
-   - I questioned: "Do we need three functions or is this over-engineered?"
-   - Graphite suggested consolidation but didn't question the original design decision
-   - **Why better**: Humans can challenge requirements, not just implement them
-
-5. **User Experience Thinking (Task 3)**
-   - I considered: "Should we warn users before cascade deleting tags from all notes?"
-   - Graphite verified the cascade behavior works, not whether it's user-friendly
-   - **Why better**: Humans empathize with user confusion/frustration
-
-**Specific Examples:**
-
-**Task 1 - Missing GET Endpoint:**
-- **Graphite**: "Missing GET endpoint for notes - You added GET by ID for action items but notes don't have an explicit GET by ID endpoint"
-- **My thought**: "This inconsistency will confuse API consumers. Which pattern should be standard? Let's decide and apply everywhere."
-- **Winner**: Graphite identified the issue, but I thought about implications for API consumers and standards
-
-**Task 2 - Code Duplication:**
-- **Graphite**: "The three extraction functions share significant logic. Consider if...extract_action_items_enhanced could replace them."
-- **My thought**: "Why do we have three functions? Is this a requirement evolution? Should we deprecate the old ones or is backward compatibility needed?"
-- **Winner**: Graphite flagged duplication, but I considered backward compatibility and migration strategy
-
-**Task 4 - Timing Tests:**
-- **Graphite**: "Lines 67-82 test created_at sorting, could be flaky if records are created too quickly"
-- **My thought**: "This will break in CI where tests run in parallel. We need to mock datetime or add explicit delays. This blocks deployment."
-- **Winner**: Graphite identified the problem, I understood operational impact
+The best example is the missing GET endpoint issue in Task 1. Graphite identified that notes lack a GET by ID endpoint while action items have one. I took it further and thought about how this inconsistency would confuse API consumers and which pattern should become the standard across all resources. For the code duplication in Task 2, Graphite flagged that three functions share logic and suggested consolidation. I wondered why we have three functions in the first place - is this requirement evolution? Should we deprecate old ones? Is backward compatibility needed? The timing tests in Task 4 show another difference: Graphite correctly identified they could be flaky, while I understood this would break in CI and block deployment.
 
 ### d. Comfort level trusting AI reviews and heuristics
 
-**Current Comfort Level: 6.5/10**
+I'd rate my current comfort level at about 6.5 out of 10. I trust AI reviews for catching things I might miss but not for deciding what actually matters or setting priorities.
 
-I trust AI reviews for **catching things I might miss**, but not for **deciding what matters**.
+AI reviews work well for initial code sweeps - that first pass to catch obvious issues around syntax, style, and missing edge cases. This is especially valuable in unfamiliar codebases where I don't know what to look for. They're also good for checklist verification, ensuring all test cases are covered and implementation details like regex patterns or status codes are correct. Pattern detection is another strength - finding code duplication and common antipatterns across large codebases where manual review would miss patterns. When debugging specific issues, AI's ability to catch test-implementation mismatches and provide precise error locations is helpful.
 
-**When to Rely on AI Reviews:**
+However, I would not rely on AI for design decisions. Questions like whether a feature should exist at all or if we're using the right architecture require human judgment. AI will tell you to verify something matches requirements, but it won't question whether the requirements themselves are wrong. User experience is another gap - AI checks if error messages exist but not if they're actually helpful or if the API is intuitive. Business logic needs human review because AI doesn't know your specific domain rules or edge cases unique to your business. Security is mixed - AI catches generic issues like SQL injection but misses domain-specific concerns like whether teachers should see all student data. And critically, AI lists everything equally without helping you triage what needs fixing before release versus what can wait.
 
-1. **Initial Code Sweep** ✅
-   - First-pass review to catch obvious issues
-   - Syntax, style, missing edge cases
-   - Best for: Unfamiliar codebases where I don't know what to look for
+My heuristic going forward is to run AI reviews first and let them catch the tedious stuff, freeing up my review time for design, UX, and business logic. For security, I trust AI for common vulnerabilities but always human-review authentication, authorization, and payment logic - AI is a safety net, not a security auditor. I think of it as AI providing breadth while I provide depth - AI scans everything quickly and might catch 80% of issues, while I dive deep on critical paths to catch the important 20%. When AI says "verify this matches requirements", that's my cue to ask whether the requirement should change, because AI assumes requirements are correct while humans can challenge them.
 
-2. **Checklist Verification** ✅
-   - Ensuring all test cases are covered
-   - Verifying implementation details (regex patterns, status codes)
-   - Best for: Technical correctness when requirements are clear
+I also use AI's confidence level as a signal. If it gives specific line numbers and code examples, that's high trust. If it says "consider if...", that's low trust and needs human judgment. If it says "verify...", it doesn't actually know and I need to investigate.
 
-3. **Pattern Detection** ✅
-   - Finding code duplication
-   - Identifying common antipatterns
-   - Best for: Large codebases where manual review would miss patterns
-
-4. **Specific Line Issues** ✅
-   - Catching test/implementation mismatches
-   - Precise error locations
-   - Best for: Debugging when something doesn't work as expected
-
-**When to NOT Rely on AI Reviews:**
-
-1. **Design Decisions** ❌
-   - Should this feature exist at all?
-   - Is this the right architecture?
-   - AI says "verify this matches requirements" - but what if requirements are wrong?
-
-2. **User Experience** ❌
-   - Will users understand this error message?
-   - Is this API intuitive?
-   - AI checks if error messages exist, not if they're helpful
-
-3. **Business Logic** ❌
-   - Does this match our specific domain rules?
-   - What about edge cases unique to our business?
-   - AI doesn't know your business context
-
-4. **Security for Your Context** ⚠️
-   - AI catches generic issues (SQL injection)
-   - But misses domain-specific concerns (should teachers see all student data?)
-   - Mixed - use AI as a baseline, add human context
-
-5. **Priority & Urgency** ❌
-   - What needs to be fixed before release?
-   - What can wait?
-   - AI lists everything equally, humans triage
-
-**My Heuristics Going Forward:**
-
-1. **Run AI First, Review Second**
-   - Let AI catch the tedious stuff
-   - Focus my review time on design, UX, and business logic
-   - Don't waste human cycles on things AI can catch
-
-2. **Trust but Verify for Security**
-   - AI is good for common vulnerabilities
-   - Always human-review authentication, authorization, payment logic
-   - AI is a safety net, not a security auditor
-
-3. **AI for Breadth, Human for Depth**
-   - AI scans everything quickly (breadth)
-   - I dive deep on critical paths (depth)
-   - AI might catch 80% of issues, I catch the critical 20%
-
-4. **Question AI's "Verify This" Comments**
-   - When AI says "verify this matches requirements", I ask "should the requirement change?"
-   - AI assumes requirements are correct, humans challenge them
-
-5. **Use AI Confidence Levels**
-   - If AI gives specific line numbers and code examples → high trust
-   - If AI says "consider if..." → low trust, needs human judgment
-   - If AI says "verify..." → it doesn't know, I need to investigate
-
-**Bottom Line:**
-AI code review is like autocorrect for code - great for catching typos and common mistakes, but you still need to read the message before sending it. I'd be comfortable merging a PR if:
-- ✅ AI review found no major issues
-- ✅ I've reviewed the business logic and design
-- ✅ Another human has reviewed it
-- ❌ AI review alone is NOT sufficient for production code
+Bottom line: AI code review is like autocorrect for code. It's great for catching typos and common mistakes, but you still need to read the message before sending it. I'd be comfortable merging a PR only if AI review found no major issues, I've personally reviewed the business logic and design, and another human has reviewed it. AI review alone is definitely not sufficient for production code.
