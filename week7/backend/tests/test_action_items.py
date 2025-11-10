@@ -20,5 +20,3 @@ def test_create_complete_list_and_patch_action_item(client):
     assert r.status_code == 200
     patched = r.json()
     assert patched["description"] == "Updated"
-
-
