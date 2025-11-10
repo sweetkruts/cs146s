@@ -3,12 +3,13 @@ import tempfile
 from collections.abc import Generator
 
 import pytest
-from backend.app.db import get_db
-from backend.app.main import app
-from backend.app.models import Base
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from backend.app.db import get_db
+from backend.app.main import app
+from backend.app.models import Base
 
 
 @pytest.fixture()
@@ -37,5 +38,3 @@ def client() -> Generator[TestClient, None, None]:
         yield c
 
     os.unlink(db_path)
-
-
