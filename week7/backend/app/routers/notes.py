@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import asc, desc, select
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 @router.get("/", response_model=list[NoteRead])
 def list_notes(
     db: Session = Depends(get_db),
-    q: Optional[str] = None,
+    q: str | None = None,
     skip: int = 0,
     limit: int = Query(50, le=200),
     sort: str = Query("-created_at", description="Sort by field, prefix with - for desc"),
@@ -64,5 +63,3 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return NoteRead.model_validate(note)
-
-

@@ -8,9 +8,7 @@ Base = declarative_base()
 
 class TimestampMixin:
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class Note(Base, TimestampMixin):
@@ -27,5 +25,3 @@ class ActionItem(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, index=True)
     description = Column(Text, nullable=False)
     completed = Column(Boolean, default=False, nullable=False)
-
-
