@@ -205,3 +205,4 @@ def test_default_pagination_and_sorting(client):
     assert len(notes) <= 50
     created_times = [n["created_at"] for n in notes]
     assert created_times == sorted(created_times, reverse=True)
+
