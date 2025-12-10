@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iReply - Intelligent iMessage Follow-up</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">💬</span>
+                <h1>iReply</h1>
+            </div>
+            <p class="tagline">Intelligent iMessage Follow-up Agent</p>
+            <div class="status-bar" id="status-bar">
+                <span class="status-dot"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Controls -->
+            <div class="controls">
+                <button id="refresh-btn" class="btn btn-primary">
+                    <span class="btn-icon">↻</span>
+                    Scan Conversations
+                </button>
+                <div class="control-group">
+                    <div class="sort-control">
+                        <label for="sort-select">Sort:</label>
+                        <select id="sort-select">
+                            <option value="desc">Oldest First</option>
+                            <option value="asc">Newest First</option>
+                        </select>
+                    </div>
+                    <div class="threshold-control">
+                        <label for="threshold-input">Stale after:</label>
+                        <input type="number" id="threshold-input" min="0" max="720" value="48" step="1">
+                        <span class="threshold-unit">hours</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Need to Reply Section -->
+            <div class="conversations-section">
+                <h2>📥 Need to Reply</h2>
+                <p class="section-desc">Messages from others waiting for your response</p>
+                
+                <div id="need-reply-container" class="conversations-grid">
+                    <div class="empty-state">
+                        <span class="empty-icon">📭</span>
+                        <p>Click "Scan Conversations" to find messages</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waiting for Reply Section -->
+            <div class="conversations-section">
+                <h2>📤 Waiting for Reply</h2>
+                <p class="section-desc">Conversations where you sent the last message with no reply</p>
+                
+                <div id="conversations-container" class="conversations-grid">
+                    <div class="empty-state">
+                        <span class="empty-icon">📭</span>
+                        <p>Click "Scan Conversations" to find messages</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>CS146S Final Project • Built with GPT-4o & FastAPI</p>
+        </footer>
+    </div>
+
+    <!-- Draft Modal -->
+    <div id="draft-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Follow-up Draft</h3>
+                <button class="modal-close" onclick="closeDraftModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="draft-contact">
+                    <span class="label">To:</span>
+                    <span id="draft-recipient" class="value"></span>
+                </div>
+                <div class="draft-context">
+                    <span class="label">Context:</span>
+                    <span id="draft-context-count" class="value"></span>
+                </div>
+                <textarea id="draft-text" class="draft-textarea" rows="4" placeholder="Generating draft..."></textarea>
+                <div class="draft-actions">
+                    <button id="regenerate-btn" class="btn btn-secondary" onclick="regenerateDraft()">
+                        <span class="btn-icon">🔄</span>
+                        Regenerate
+                    </button>
+                    <button id="send-btn" class="btn btn-success" onclick="sendMessage()">
+                        <span class="btn-icon">📤</span>
+                        Send via iMessage
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>Confirm Send</h3>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-text">Are you sure you want to send this message?</p>
+                <p class="confirm-recipient">To: <strong id="confirm-recipient"></strong></p>
+                <div class="confirm-actions">
+                    <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                    <button class="btn btn-success" onclick="confirmSend()">Yes, Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span class="toast-icon"></span>
+        <span class="toast-message"></span>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
+
